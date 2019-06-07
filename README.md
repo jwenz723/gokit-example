@@ -13,8 +13,8 @@ and response objects. This can be overcome by defining a simple interface that c
 request and response type. Here is the interface (extracted from [pkg/eplogger/eplogger.go](pkg/eplogger/eplogger.go):
 
 ```go
-type LogKeyvalsAdder interface {
-	AddLogKeyvals(log.Logger) log.Logger
+type LoggingKeyvalser interface {
+	LoggingKeyvals() (keyvals []interface{})
 }
 ```
 
@@ -22,14 +22,15 @@ Now we need to implement the interface on the request/response types that we wan
 middleware (extraced from [pkg/endpoint/endpoint.go](pkg/endpoint/endpoint.go):
 
 ```go
+// SumRequest collects the request parameters for the Sum method.
 type SumRequest struct {
 	A int `json:"a"`
 	B int `json:"b"`
 }
 
-// AddLogKeyvals implements LogKeyvalsAdder to add log keyvals specific to SumRequest
-func (s SumRequest) AddLogKeyvals(logger log.Logger) log.Logger {
-	return log.With(logger, "SumRequest.A", s.A, "SumRequest.B", s.B)
+// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to SumRequest for logging
+func (s SumRequest) LoggingKeyvals() []interface{} {
+	return []interface{}{"SumRequest.A", s.A, "SumRequest.B", s.B}
 }
 ```
 
@@ -45,15 +46,15 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
-				// Check if request implements the LogKeyvalsAdder interface
-				if l, ok := request.(LogKeyvalsAdder); ok {
+				// Check if request implements the LoggingKeyvalser interface
+				if l, ok := request.(LoggingKeyvalser); ok {
 					// Update logger to contain keyvals specific to request
-					logger = l.AddLogKeyvals(logger)
+					logger = log.With(logger, l.LoggingKeyvals()...)
 				}
-				// Check if response implements the LogKeyvalsAdder interface
-				if l, ok := response.(LogKeyvalsAdder); ok {
+				// Check if response implements the LoggingKeyvalser interface
+				if l, ok := response.(LoggingKeyvalser); ok {
 					// Update logger to contain keyvals specific to request
-					logger = l.AddLogKeyvals(logger)
+					logger = log.With(logger, l.LoggingKeyvals()...)
 				}
 				logger.Log("transport_error", err, "took", time.Since(begin))
 			}(time.Now())
@@ -92,10 +93,6 @@ $ curl -d '{"a":2,"b":3}' localhost:8081/multiply
 See the keyvals printed for each request/response (the keys start with `SumRequest.`, `SumResponse.`, `MultiplyRequest.`, and `MultiplyResponse.`):
 
 ```bash
-$ go run cmd/main.go 
-ts=2019-06-06T20:06:51.379254Z caller=service.go:79 tracer=none
-ts=2019-06-06T20:06:51.37984Z caller=service.go:135 transport=debug/HTTP addr=:8080
-ts=2019-06-06T20:06:51.379841Z caller=service.go:101 transport=HTTP addr=:8081
-ts=2019-06-06T20:07:22.25947Z caller=middleware.go:43 method=Sum SumRequest.A=2 SumRequest.B=3 SumResponse.R=5 SumResponse.Err=null transport_error=null took=8.018µs
-ts=2019-06-06T20:07:26.352975Z caller=middleware.go:43 method=Multiply MultiplyRequest.R=2 MultiplyRequest.Err=3 MultiplyResponse.R=6 MultiplyResponse.Err=null transport_error=null took=8.179µs
+ts=2019-06-07T05:02:48.01564Z caller=eplogger.go:32 method=Sum SumRequest.A=2 SumRequest.B=3 SumResponse.R=5 SumResponse.Err=null transport_error=null took=13.38µs
+ts=2019-06-07T05:02:49.198004Z caller=eplogger.go:32 method=Multiply MultiplyRequest.A=2 MultiplyRequest.B=3 MultiplyResponse.R=6 MultiplyResponse.Err=null transport_error=null took=24.711µsv
 ```

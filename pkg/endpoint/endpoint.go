@@ -2,10 +2,8 @@ package endpoint
 
 import (
 	"context"
-	log "github.com/go-kit/kit/log"
-
-	endpoint "github.com/go-kit/kit/endpoint"
-	service "github.com/jwenz723/logwrapper/pkg/service"
+	"github.com/go-kit/kit/endpoint"
+	"github.com/jwenz723/logwrapper/pkg/service"
 )
 
 // SumRequest collects the request parameters for the Sum method.
@@ -14,9 +12,9 @@ type SumRequest struct {
 	B int `json:"b"`
 }
 
-// AddLogKeyvals implements LogKeyvalsAdder to add log keyvals specific to SumRequest
-func (s SumRequest) AddLogKeyvals(logger log.Logger) log.Logger {
-	return log.With(logger, "SumRequest.A", s.A, "SumRequest.B", s.B)
+// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to SumRequest for logging
+func (s SumRequest) LoggingKeyvals() []interface{} {
+	return []interface{}{"SumRequest.A", s.A, "SumRequest.B", s.B}
 }
 
 // SumResponse collects the response parameters for the Sum method.
@@ -25,9 +23,9 @@ type SumResponse struct {
 	Err error `json:"err"`
 }
 
-// AddLogKeyvals implements LogKeyvalsAdder to add log keyvals specific to SumResponse
-func (s SumResponse) AddLogKeyvals(logger log.Logger) log.Logger {
-	return log.With(logger, "SumResponse.R", s.R, "SumResponse.Err", s.Err)
+// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to SumResponse for logging
+func (s SumResponse) LoggingKeyvals() []interface{} {
+	return []interface{}{"SumResponse.R", s.R, "SumResponse.Err", s.Err}
 }
 
 // MakeSumEndpoint returns an endpoint that invokes Sum on the service.
@@ -53,9 +51,9 @@ type MultiplyRequest struct {
 	B int `json:"b"`
 }
 
-// AddLogKeyvals implements LogKeyvalsAdder to add log keyvals specific to MultiplyRequest
-func (s MultiplyRequest) AddLogKeyvals(logger log.Logger) log.Logger {
-	return log.With(logger, "MultiplyRequest.R", s.A, "MultiplyRequest.Err", s.B)
+// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to MultiplyRequest for logging
+func (s MultiplyRequest) LoggingKeyvals() []interface{} {
+	return []interface{}{"MultiplyRequest.A", s.A, "MultiplyRequest.B", s.B}
 }
 
 // MultiplyResponse collects the response parameters for the Multiply method.
@@ -64,9 +62,9 @@ type MultiplyResponse struct {
 	Err error `json:"err"`
 }
 
-// AddLogKeyvals implements LogKeyvalsAdder to add log keyvals specific to MultiplyResponse
-func (s MultiplyResponse) AddLogKeyvals(logger log.Logger) log.Logger {
-	return log.With(logger, "MultiplyResponse.R", s.R, "MultiplyResponse.Err", s.Err)
+// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to MultiplyRequest for logging
+func (s MultiplyResponse) LoggingKeyvals() []interface{} {
+	return []interface{}{"MultiplyResponse.R", s.R, "MultiplyResponse.Err", s.Err}
 }
 
 // MakeMultiplyEndpoint returns an endpoint that invokes Multiply on the service.

@@ -10,7 +10,7 @@ This logging middleware can be applied across all endpoints using a single imple
 interface. Since this middleware is being applied at the endpoint level the request and response are received/responded
 as type `interface{}`. This makes it difficult to log specific fields/values that are contained within the request
 and response objects. This can be overcome by defining a simple interface that can be implemented by each endpoint 
-request and response type. Here is the interface (extracted from [pkg/endpoing/middleware.go](pkg/endpoing/middleware.go):
+request and response type. Here is the interface (extracted from [pkg/eplogger/eplogger.go](pkg/eplogger/eplogger.go):
 
 ```go
 type LogKeyvalsAdder interface {
@@ -34,7 +34,7 @@ func (s SumRequest) AddLogKeyvals(logger log.Logger) log.Logger {
 ```
 
 Now we define the logging middleware to take advantage of this 
-interface (extracted from [pkg/endpoint/middleware.go](pkg/endpoint/middleware.go)):
+interface (extracted from [pkg/eplogger/eplogger.go](pkg/eplogger/eplogger.go)):
 
 ```go
 // LoggingMiddleware returns an endpoint middleware that logs the

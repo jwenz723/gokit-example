@@ -87,12 +87,11 @@ $ curl -d '{"a":2,"b":3}' localhost:8081/sum
 {"r":5,"err":null}
 $ curl -d '{"a":2,"b":3}' localhost:8081/multiply
 {"r":6,"err":null}
-
 ```
 
 See the keyvals printed for each request/response (the keys start with `SumRequest.`, `SumResponse.`, `MultiplyRequest.`, and `MultiplyResponse.`):
 
 ```bash
-ts=2019-06-07T05:02:48.01564Z caller=eplogger.go:32 method=Sum SumRequest.A=2 SumRequest.B=3 SumResponse.R=5 SumResponse.Err=null transport_error=null took=13.38µs
-ts=2019-06-07T05:02:49.198004Z caller=eplogger.go:32 method=Multiply MultiplyRequest.A=2 MultiplyRequest.B=3 MultiplyResponse.R=6 MultiplyResponse.Err=null transport_error=null took=24.711µsv
+ts=2019-06-12T20:01:41.671115Z caller=level.go:150 method=Sum level=info SumRequest.A=2 SumRequest.B=3 SumResponse.R=5 SumResponse.Err=null transport_error=null took=11.08µs
+ts=2019-06-12T20:01:45.862347Z caller=level.go:150 method=Multiply level=info MultiplyRequest.A=2 MultiplyRequest.B=3 MultiplyResponse.R=6 MultiplyResponse.Err=null transport_error=null took=6.548µs
 ```

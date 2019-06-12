@@ -4,6 +4,7 @@ package service
 import (
 	endpoint1 "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	prometheus "github.com/go-kit/kit/metrics/prometheus"
 	opentracing "github.com/go-kit/kit/tracing/opentracing"
 	http "github.com/go-kit/kit/transport/http"
@@ -28,8 +29,8 @@ func defaultHttpOptions(logger log.Logger, tracer opentracinggo.Tracer) map[stri
 	return options
 }
 func addDefaultEndpointMiddleware(logger log.Logger, duration *prometheus.Summary, mw map[string][]endpoint1.Middleware) {
-	mw["Sum"] = []endpoint1.Middleware{eplogger.LoggingMiddleware(log.With(logger, "method", "Sum")), endpoint.InstrumentingMiddleware(duration.With("method", "Sum"))}
-	mw["Multiply"] = []endpoint1.Middleware{eplogger.LoggingMiddleware(log.With(logger, "method", "Multiply")), endpoint.InstrumentingMiddleware(duration.With("method", "Multiply"))}
+	mw["Sum"] = []endpoint1.Middleware{eplogger.LoggingMiddleware(log.With(logger, "method", "Sum"), level.InfoValue()), endpoint.InstrumentingMiddleware(duration.With("method", "Sum"))}
+	mw["Multiply"] = []endpoint1.Middleware{eplogger.LoggingMiddleware(log.With(logger, "method", "Multiply"), level.InfoValue()), endpoint.InstrumentingMiddleware(duration.With("method", "Multiply"))}
 }
 func addDefaultServiceMiddleware(logger log.Logger, mw []service.Middleware) []service.Middleware {
 	return append(mw, service.LoggingMiddleware(logger))

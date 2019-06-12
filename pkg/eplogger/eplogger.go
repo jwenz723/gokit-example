@@ -11,6 +11,11 @@ type LoggingKeyvalser interface {
 	LoggingKeyvals() (keyvals []interface{})
 }
 
+const (
+	tookKey     = "took"
+	transErrKey = "transport_error"
+)
+
 // LoggingMiddleware returns an endpoint middleware that logs the
 // duration of each invocation, the resulting error (if any), and
 // keyvals specific to the request and response object if they implement
@@ -29,7 +34,7 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 					// Update logger to contain keyvals specific to request
 					logger = log.With(logger, l.LoggingKeyvals()...)
 				}
-				logger.Log("transport_error", err, "took", time.Since(begin))
+				logger.Log(transErrKey, err, tookKey, time.Since(begin))
 			}(time.Now())
 			return next(ctx, request)
 		}

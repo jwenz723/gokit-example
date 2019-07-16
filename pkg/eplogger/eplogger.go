@@ -4,12 +4,29 @@ import (
 	"context"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"time"
 )
 
-type LoggingKeyvalser interface {
-	LoggingKeyvals() (keyvals []interface{})
+// AppendKeyvalser is an interface that wraps the basic AppendKeyvals method.
+//
+// AppendKeyvals should be implemented to append key/value pairs into keyvals
+// without removing any existing elements, then return the extended keyvals.
+//		Example:
+//			// Define your struct type
+//			type SomeType struct{
+//				AField string
+//				BField string
+//			}
+//
+//			// Implement the AppendKeyvals func to satisfy the AppendKeyvalser interface
+//			func (s SomeType) AppendKeyvals(keyvals []interface{}) []interface{} {
+//				// Add key/value sets here (2 values per set, key followed by value)
+//			 	return append(keyvals,
+//			 		"SomeType.AField", s.AField,
+//			 		"SomeType.BField", s.BField)
+//			}
+type AppendKeyvalser interface {
+	AppendKeyvals(keyvals []interface{}) []interface{}
 }
 
 const (
@@ -20,45 +37,39 @@ const (
 // LoggingMiddleware returns an endpoint middleware that logs the
 // duration of each invocation, the resulting error (if any), and
 // keyvals specific to the request and response object if they implement
-// the LoggingKeyvalser interface.
+// the AppendKeyvalser interface.
 //
 // The level specified as defaultLevel will be used when the resulting error
 // is nil otherwise level.Error will be used.
-func LoggingMiddleware(logger log.Logger, defaultLevel level.Value) endpoint.Middleware {
-	// This will set a default log level if one is not set when logger.Log() is executed
-	logger = level.NewInjector(logger, defaultLevel)
+func LoggingMiddleware(logger, errLogger log.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func(begin time.Time) {
+				kvs := makeKeyvals(request, response, time.Since(begin), err)
 				if err != nil {
-					logger = level.Error(logger)
+					errLogger.Log(kvs...)
+				} else {
+					logger.Log(kvs...)
 				}
-				logger = logWithLoggingKeyvalser(logger, request)
-				logger = logWithLoggingKeyvalser(logger, response)
-				logger = logWithError(logger, err)
-				logger = logWithDuration(logger, time.Since(begin))
-				logger.Log()
 			}(time.Now())
 			return next(ctx, request)
 		}
 	}
 }
 
-// logWithLoggingKeyvalser will add the keyvals returned by k.LoggingKeyvals
-// into logger if k implements the LoggingKeyvalser interface
-func logWithLoggingKeyvalser(logger log.Logger, k interface{}) log.Logger {
-	if l, ok := k.(LoggingKeyvalser); ok {
-		return log.With(logger, l.LoggingKeyvals()...)
+// makeKeyvals will place the received parameters into an []interface{} to be
+// returned in the order:
+// 	1. err
+//	2. d
+//	3. req (if AppendKeyvalser is implemented)
+//	4. resp (if AppendKeyvalser is implemented)
+func makeKeyvals(req, resp interface{}, d time.Duration, err error) []interface{} {
+	KVs := []interface{}{transErrKey, err, tookKey, d}
+	if l, ok := req.(AppendKeyvalser); ok {
+		KVs = l.AppendKeyvals(KVs)
 	}
-	return logger
-}
-
-// logWithError will add err into the keyvals of logger
-func logWithError(logger log.Logger, err error) log.Logger {
-	return log.With(logger, transErrKey, err)
-}
-
-// logWithDuration will add d into the keyvals of logger
-func logWithDuration(logger log.Logger, d time.Duration) log.Logger {
-	return log.With(logger, tookKey, d)
+	if l, ok := resp.(AppendKeyvalser); ok {
+		KVs = l.AppendKeyvals(KVs)
+	}
+	return KVs
 }

@@ -29,8 +29,11 @@ func defaultHttpOptions(logger log.Logger, tracer opentracinggo.Tracer) map[stri
 	return options
 }
 func addDefaultEndpointMiddleware(logger log.Logger, duration *prometheus.Summary, mw map[string][]endpoint1.Middleware) {
-	mw["Sum"] = []endpoint1.Middleware{eplogger.LoggingMiddleware(log.With(logger, "method", "Sum"), level.InfoValue()), endpoint.InstrumentingMiddleware(duration.With("method", "Sum"))}
-	mw["Multiply"] = []endpoint1.Middleware{eplogger.LoggingMiddleware(log.With(logger, "method", "Multiply"), level.InfoValue()), endpoint.InstrumentingMiddleware(duration.With("method", "Multiply"))}
+	sumLogger := log.With(logger, "method", "Sum")
+	multiplyLogger := log.With(logger, "method", "Multiply")
+
+	mw["Sum"] = []endpoint1.Middleware{eplogger.LoggingMiddleware(level.Info(sumLogger), level.Error(sumLogger)), endpoint.InstrumentingMiddleware(duration.With("method", "Sum"))}
+	mw["Multiply"] = []endpoint1.Middleware{eplogger.LoggingMiddleware(level.Info(multiplyLogger), level.Error(multiplyLogger)), endpoint.InstrumentingMiddleware(duration.With("method", "Multiply"))}
 }
 func addDefaultServiceMiddleware(logger log.Logger, mw []service.Middleware) []service.Middleware {
 	return append(mw, service.LoggingMiddleware(logger))

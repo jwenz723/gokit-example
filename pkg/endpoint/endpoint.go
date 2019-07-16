@@ -3,7 +3,21 @@ package endpoint
 import (
 	"context"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/jwenz723/logwrapper/pkg/eplogger"
 	"github.com/jwenz723/logwrapper/pkg/service"
+)
+
+// compile time assertions to ensure our types are implementing interfaces
+var (
+	// endpoint.Failer interface
+	_ endpoint.Failer = MultiplyResponse{}
+	_ endpoint.Failer = SumResponse{}
+
+	// eplogger.AppendKeyvalser interface
+	_ eplogger.AppendKeyvalser = MultiplyRequest{}
+	_ eplogger.AppendKeyvalser = MultiplyResponse{}
+	_ eplogger.AppendKeyvalser = SumRequest{}
+	_ eplogger.AppendKeyvalser = SumResponse{}
 )
 
 // SumRequest collects the request parameters for the Sum method.
@@ -12,9 +26,11 @@ type SumRequest struct {
 	B int `json:"b"`
 }
 
-// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to SumRequest for logging
-func (s SumRequest) LoggingKeyvals() []interface{} {
-	return []interface{}{"SumRequest.A", s.A, "SumRequest.B", s.B}
+// AppendKeyvals implements AppendKeyvalser to return keyvals specific to SumRequest for logging
+func (s SumRequest) AppendKeyvals(keyvals []interface{}) []interface{} {
+	return append(keyvals,
+		"SumRequest.A", s.A,
+		"SumRequest.B", s.B)
 }
 
 // SumResponse collects the response parameters for the Sum method.
@@ -23,9 +39,11 @@ type SumResponse struct {
 	Err error `json:"err"`
 }
 
-// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to SumResponse for logging
-func (s SumResponse) LoggingKeyvals() []interface{} {
-	return []interface{}{"SumResponse.R", s.R, "SumResponse.Err", s.Err}
+// AppendKeyvals implements AppendKeyvalser to return keyvals specific to SumResponse for logging
+func (s SumResponse) AppendKeyvals(keyvals []interface{}) []interface{} {
+	return append(keyvals,
+		"SumResponse.R", s.R,
+		"SumResponse.Err", s.Err)
 }
 
 // MakeSumEndpoint returns an endpoint that invokes Sum on the service.
@@ -51,9 +69,11 @@ type MultiplyRequest struct {
 	B int `json:"b"`
 }
 
-// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to MultiplyRequest for logging
-func (s MultiplyRequest) LoggingKeyvals() []interface{} {
-	return []interface{}{"MultiplyRequest.A", s.A, "MultiplyRequest.B", s.B}
+// AppendKeyvals implements AppendKeyvalser to return keyvals specific to MultiplyRequest for logging
+func (s MultiplyRequest) AppendKeyvals(keyvals []interface{}) []interface{} {
+	return append(keyvals,
+		"MultiplyRequest.A", s.A,
+		"MultiplyRequest.B", s.B)
 }
 
 // MultiplyResponse collects the response parameters for the Multiply method.
@@ -62,9 +82,11 @@ type MultiplyResponse struct {
 	Err error `json:"err"`
 }
 
-// LoggingKeyvals implements LoggingKeyvalser to return keyvals specific to MultiplyRequest for logging
-func (s MultiplyResponse) LoggingKeyvals() []interface{} {
-	return []interface{}{"MultiplyResponse.R", s.R, "MultiplyResponse.Err", s.Err}
+// AppendKeyvals implements AppendKeyvalser to return keyvals specific to MultiplyResponse for logging
+func (s MultiplyResponse) AppendKeyvals(keyvals []interface{}) []interface{} {
+	return append(keyvals,
+		"MultiplyResponse.R", s.R,
+		"MultiplyResponse.Err", s.Err)
 }
 
 // MakeMultiplyEndpoint returns an endpoint that invokes Multiply on the service.
